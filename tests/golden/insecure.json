@@ -1,0 +1,288 @@
+{
+  "schema_version": 1,
+  "tool": {
+    "name": "compose-doctor",
+    "version": "0.1.0"
+  },
+  "files": [
+    "examples/insecure/compose.yaml"
+  ],
+  "summary": {
+    "error": 10,
+    "warning": 11,
+    "note": 6,
+    "suppressed": 0
+  },
+  "findings": [
+    {
+      "rule_id": "CD007",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 6,
+      "column": 3,
+      "service": "web",
+      "message": "Service has no healthcheck although it publishes ports",
+      "fix": "Add a healthcheck that proves the service is serving, for example test: [\"CMD-SHELL\", \"pg_isready -U app\"] for PostgreSQL, with interval, timeout and retries."
+    },
+    {
+      "rule_id": "CD008",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 6,
+      "column": 3,
+      "service": "web",
+      "message": "Service has no restart policy",
+      "fix": "Set 'restart: unless-stopped' (or 'always' / 'on-failure')."
+    },
+    {
+      "rule_id": "CD010",
+      "severity": "note",
+      "file": "examples/insecure/compose.yaml",
+      "line": 6,
+      "column": 3,
+      "service": "web",
+      "message": "Service has no memory limit",
+      "fix": "Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'."
+    },
+    {
+      "rule_id": "CD001",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 7,
+      "column": 5,
+      "service": "web",
+      "message": "Image 'example/shop-web:latest' uses the 'latest' tag",
+      "fix": "Pin a specific version tag (postgres:16.4) or a digest (image@sha256:...)."
+    },
+    {
+      "rule_id": "CD015",
+      "severity": "note",
+      "file": "examples/insecure/compose.yaml",
+      "line": 8,
+      "column": 5,
+      "service": "web",
+      "message": "Service sets a fixed container_name",
+      "fix": "Remove 'container_name' and refer to the service by its service name."
+    },
+    {
+      "rule_id": "CD006",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 13,
+      "column": 7,
+      "service": "web",
+      "message": "Environment variable 'DJANGO_SECRET_KEY' has a hard-coded secret value",
+      "fix": "Load it from the environment or an untracked .env file (KEY: ${KEY}), or use Docker secrets with a *_FILE variable."
+    },
+    {
+      "rule_id": "CD009",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 15,
+      "column": 9,
+      "service": "web",
+      "message": "Depends on 'db' only being started, not healthy, although it has a healthcheck",
+      "fix": "Use the long form: depends_on: {db: {condition: service_healthy}}."
+    },
+    {
+      "rule_id": "CD010",
+      "severity": "note",
+      "file": "examples/insecure/compose.yaml",
+      "line": 18,
+      "column": 3,
+      "service": "db",
+      "message": "Service has no memory limit",
+      "fix": "Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'."
+    },
+    {
+      "rule_id": "CD001",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 19,
+      "column": 5,
+      "service": "db",
+      "message": "Image 'postgres' has no tag, so it resolves to 'latest'",
+      "fix": "Pin a specific version tag (postgres:16.4) or a digest (image@sha256:...)."
+    },
+    {
+      "rule_id": "CD005",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 21,
+      "column": 9,
+      "service": "db",
+      "message": "PostgreSQL container port 5432 is published on all interfaces",
+      "fix": "Remove the port mapping and connect over the Compose network, or bind it to loopback, for example '127.0.0.1:5432:5432'."
+    },
+    {
+      "rule_id": "CD006",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 24,
+      "column": 7,
+      "service": "db",
+      "message": "Environment variable 'POSTGRES_PASSWORD' has a hard-coded secret value",
+      "fix": "Load it from the environment or an untracked .env file (KEY: ${KEY}), or use Docker secrets with a *_FILE variable."
+    },
+    {
+      "rule_id": "CD008",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 30,
+      "column": 5,
+      "service": "db",
+      "message": "Restart policy is 'no'",
+      "fix": "Set 'restart: unless-stopped' (or 'always' / 'on-failure')."
+    },
+    {
+      "rule_id": "CD007",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 32,
+      "column": 3,
+      "service": "cache",
+      "message": "Service has no healthcheck although other services depend on it (web)",
+      "fix": "Add a healthcheck that proves the service is serving, for example test: [\"CMD-SHELL\", \"pg_isready -U app\"] for PostgreSQL, with interval, timeout and retries."
+    },
+    {
+      "rule_id": "CD010",
+      "severity": "note",
+      "file": "examples/insecure/compose.yaml",
+      "line": 32,
+      "column": 3,
+      "service": "cache",
+      "message": "Service has no memory limit",
+      "fix": "Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'."
+    },
+    {
+      "rule_id": "CD005",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 35,
+      "column": 9,
+      "service": "cache",
+      "message": "Redis container port 6379 is published on all interfaces",
+      "fix": "Remove the port mapping and connect over the Compose network, or bind it to loopback, for example '127.0.0.1:5432:5432'."
+    },
+    {
+      "rule_id": "CD010",
+      "severity": "note",
+      "file": "examples/insecure/compose.yaml",
+      "line": 38,
+      "column": 3,
+      "service": "worker",
+      "message": "Service has no memory limit",
+      "fix": "Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'."
+    },
+    {
+      "rule_id": "CD002",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 40,
+      "column": 5,
+      "service": "worker",
+      "message": "Container runs in privileged mode",
+      "fix": "Remove 'privileged: true' and grant only the specific capabilities or devices needed."
+    },
+    {
+      "rule_id": "CD013",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 41,
+      "column": 5,
+      "service": "worker",
+      "message": "'pid: host' shares the host's namespace",
+      "fix": "Remove the setting so the container gets its own namespace."
+    },
+    {
+      "rule_id": "CD011",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 43,
+      "column": 9,
+      "service": "worker",
+      "message": "Dangerous capability SYS_ADMIN is added",
+      "fix": "Remove the capability, or replace it with the narrowest one the service needs."
+    },
+    {
+      "rule_id": "CD012",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 45,
+      "column": 9,
+      "service": "worker",
+      "message": "The seccomp security profile is disabled",
+      "fix": "Remove the 'unconfined' option. If a specific call is blocked, use a custom profile that allows only that call."
+    },
+    {
+      "rule_id": "CD006",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 48,
+      "column": 9,
+      "service": "worker",
+      "message": "Environment variable 'PAYMENT_API_TOKEN' has a hard-coded secret value",
+      "fix": "Load it from the environment or an untracked .env file (KEY: ${KEY}), or use Docker secrets with a *_FILE variable."
+    },
+    {
+      "rule_id": "CD003",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 50,
+      "column": 9,
+      "service": "worker",
+      "message": "The Docker socket /var/run/docker.sock is mounted into the container",
+      "fix": "Remove the socket mount. If the service really needs the Docker API, put a filtering proxy (for example docker-socket-proxy) in front of it and allow only the calls it needs."
+    },
+    {
+      "rule_id": "CD014",
+      "severity": "error",
+      "file": "examples/insecure/compose.yaml",
+      "line": 51,
+      "column": 9,
+      "service": "worker",
+      "message": "Sensitive host path /etc is mounted",
+      "fix": "Mount only the specific application directory the service needs, read-only if possible."
+    },
+    {
+      "rule_id": "CD009",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 53,
+      "column": 9,
+      "service": "worker",
+      "message": "Depends on 'db' only being started, not healthy, although it has a healthcheck",
+      "fix": "Use the long form: depends_on: {db: {condition: service_healthy}}."
+    },
+    {
+      "rule_id": "CD010",
+      "severity": "note",
+      "file": "examples/insecure/compose.yaml",
+      "line": 56,
+      "column": 3,
+      "service": "adminer",
+      "message": "Service has no memory limit",
+      "fix": "Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'."
+    },
+    {
+      "rule_id": "CD001",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 57,
+      "column": 5,
+      "service": "adminer",
+      "message": "Image 'adminer' has no tag, so it resolves to 'latest'",
+      "fix": "Pin a specific version tag (postgres:16.4) or a digest (image@sha256:...)."
+    },
+    {
+      "rule_id": "CD004",
+      "severity": "warning",
+      "file": "examples/insecure/compose.yaml",
+      "line": 58,
+      "column": 5,
+      "service": "adminer",
+      "message": "Container uses the host's network stack",
+      "fix": "Remove 'network_mode: host' and publish only the ports you need with 'ports:'."
+    }
+  ]
+}

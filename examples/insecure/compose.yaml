@@ -1,0 +1,62 @@
+# A deliberately insecure stack for demonstrating Compose Doctor.
+# Every password, token and key below is fake. Do not deploy this file.
+name: shop
+
+services:
+  web:
+    image: example/shop-web:latest
+    container_name: shop-web
+    ports:
+      - "80:8000"
+    environment:
+      DATABASE_URL: postgres://shop@db:5432/shop
+      DJANGO_SECRET_KEY: fake-django-secret-123
+    depends_on:
+      - db
+      - cache
+
+  db:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD: fake-pass-123
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shop"]
+      interval: 10s
+    restart: "no"
+
+  cache:
+    image: redis:7.4
+    ports:
+      - "6379:6379"
+    restart: always
+
+  worker:
+    image: example/shop-worker:1.4.2
+    privileged: true
+    pid: host
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - QUEUE_URL=redis://cache:6379/0
+      - PAYMENT_API_TOKEN=fake-token-xyz
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /etc:/host-etc:ro
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  adminer:
+    image: adminer
+    network_mode: host
+    restart: unless-stopped
+
+volumes:
+  db-data:

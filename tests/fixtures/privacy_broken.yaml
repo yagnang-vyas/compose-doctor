@@ -1,0 +1,11 @@
+# Same fake secrets, followed by a YAML syntax error further down.
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: fake-pass-123
+  worker:
+    environment:
+      - API_TOKEN=fake-token-xyz
+    ports: [ "80:80"
+  broken: : here

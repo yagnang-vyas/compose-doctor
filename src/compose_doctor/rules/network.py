@@ -111,8 +111,8 @@ EXPOSED_DATABASE = Rule(
         "Exposed databases are found and attacked within hours."
     ),
     fix=(
-        "Remove the port mapping and connect over the Compose network, or bind to loopback: "
-        "'127.0.0.1:5432:5432'."
+        "Remove the port mapping and connect over the Compose network, or bind it to loopback, "
+        "for example '127.0.0.1:5432:5432'."
     ),
     check=check_exposed_database,
 )
