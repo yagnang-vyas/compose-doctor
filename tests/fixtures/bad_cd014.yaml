@@ -1,0 +1,16 @@
+services:
+  agent:
+    image: agent:1.0
+    volumes:
+      - /:/host # expect: CD014
+      - /etc:/host-etc:ro # expect: CD014
+      - /etc/ssl/certs:/certs:ro # expect: CD014
+      - /root/.ssh:/ssh # expect: CD014
+      - /proc:/host/proc:ro # expect: CD014
+      - /sys/fs/cgroup:/cgroup # expect: CD014
+      - /boot:/boot # expect: CD014
+      - /var/lib/docker/volumes:/volumes # expect: CD014
+      - /srv/../etc/:/sneaky # expect: CD014
+      - type: bind # expect: CD014
+        source: /etc/
+        target: /host-etc

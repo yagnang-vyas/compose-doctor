@@ -1,0 +1,10 @@
+services:
+  mem_limit:
+    image: nginx:1.27
+    mem_limit: 256m
+  deploy_limit:
+    image: nginx:1.27
+    deploy:
+      resources:
+        limits:
+          memory: 256M

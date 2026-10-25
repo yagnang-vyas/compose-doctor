@@ -1,0 +1,33 @@
+services:
+  web:
+    image: nginx:1.27
+    ports:
+      - "99999:80" # expect: CD000
+      - "8080:80/icmp" # expect: CD000
+      - "[::1:8080:80" # expect: CD000
+      - "[::1]8080" # expect: CD000
+      - "localhost:8080:80" # expect: CD000
+      - "80-70:80" # expect: CD000
+      - "abc" # expect: CD000
+      - true # expect: CD000
+      - published: 8080 # expect: CD000
+    volumes:
+      - "" # expect: CD000
+      - a:b:c:d # expect: CD000
+      - type: bind # expect: CD000
+        source: ./data
+    environment:
+      - GOOD=1
+      - 42 # expect: CD000
+    depends_on:
+      - ghost # expect: CD000
+    restart: sometimes # expect: CD000
+  worker:
+    image: # expect: CD000
+      name: nginx
+    cap_add: SYS_ADMIN # expect: CD000
+    security_opt: no-new-privileges # expect: CD000
+    volumes: ./data:/data # expect: CD000
+    ports: "80:80" # expect: CD000
+    depends_on: web # expect: CD000
+    environment: KEY=value # expect: CD000

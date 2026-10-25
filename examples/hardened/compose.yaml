@@ -1,0 +1,94 @@
+# The same stack as examples/insecure, with every Compose Doctor finding fixed.
+# Secrets come from an untracked .env file or Docker secrets; nothing sensitive is in this file.
+name: shop
+
+x-defaults: &defaults
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  web:
+    <<: *defaults
+    image: example/shop-web:1.4.2
+    ports:
+      # Only reachable from the host, where a reverse proxy (e.g. Nginx) terminates TLS.
+      - "127.0.0.1:8000:8000"
+    environment:
+      DATABASE_URL: postgres://shop@db:5432/shop
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY in .env}
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    mem_limit: 512m
+
+  db:
+    <<: *defaults
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: shop
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shop"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    mem_limit: 1g
+
+  cache:
+    <<: *defaults
+    image: redis:7.4
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    mem_limit: 256m
+
+  worker:
+    <<: *defaults
+    image: example/shop-worker:1.4.2
+    cap_drop:
+      - ALL
+    environment:
+      - QUEUE_URL=redis://cache:6379/0
+      - PAYMENT_API_TOKEN=${PAYMENT_API_TOKEN:?set PAYMENT_API_TOKEN in .env}
+    volumes:
+      - ./config:/app/config:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  adminer:
+    <<: *defaults
+    image: adminer:4.8.1
+    ports:
+      - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('localhost', 8080) ? 0 : 1);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    mem_limit: 128m
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+
+volumes:
+  db-data:

@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16.4
+    ports:
+      - "5432:5432" # expect: CD005
+      - "0.0.0.0:5433:5432" # expect: CD005
+      - "15432:5432/tcp" # expect: CD005
+      - "5432" # expect: CD005
+      - target: 5432 # expect: CD005
+        published: 5434
+      - target: 5432 # expect: CD005
+        published: 5435
+        host_ip: 192.168.1.10
+  admin_port_on_db_image:
+    image: postgres:16.4
+    ports:
+      - "8080:8080" # expect: CD005
+  generic_image_db_port:
+    image: example/custom-store:1.0
+    ports:
+      - "6379:6379" # expect: CD005
+      - "27000-27100:27000-27100" # expect: CD005
+      - "[::]:3306:3306" # expect: CD005
+  cache:
+    image: docker.io/library/redis:7.4
+    ports:
+      - "${REDIS_PORT}:6379" # expect: CD005

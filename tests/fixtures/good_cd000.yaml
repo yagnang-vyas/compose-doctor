@@ -1,0 +1,54 @@
+services:
+  web:
+    image: nginx:1.27
+    ports:
+      - "80"
+      - 8080:80
+      - "127.0.0.1:8081:80"
+      - "127.0.0.1::80"
+      - "[::1]:8082:80"
+      - "::1:8083:80"
+      - "9000-9010:9000-9010"
+      - "53:53/udp"
+      - "8084:80/TCP"
+      - 443
+      - "${WEB_PORT:-8085}:80"
+      - "${BIND_IP}:8086:${TARGET}"
+      - target: 80
+        published: "8087"
+        host_ip: 127.0.0.1
+        protocol: tcp
+        mode: host
+      - target: ${TARGET_PORT}
+    volumes:
+      - data:/var/lib/data
+      - /srv/app:/app:ro
+      - /cache
+      - type: volume
+        source: data
+        target: /data
+      - type: bind
+        source: ${PWD}/config
+        target: /config
+    environment:
+      - MODE=production
+      - EMPTY=
+      - FROM_HOST
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure:3
+  db:
+    image: postgres:16.4
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_PORT: 5432
+    restart: "${RESTART_POLICY:-always}"
+  cache:
+    image: redis:7.4
+    restart: no
+    environment:
+    volumes:
+    ports: []
+volumes:
+  data:

@@ -1,0 +1,9 @@
+services:
+  bridge:
+    image: nginx:1.27
+    network_mode: bridge
+  shared:
+    image: nginx:1.27
+    network_mode: service:bridge
+  absent:
+    image: nginx:1.27

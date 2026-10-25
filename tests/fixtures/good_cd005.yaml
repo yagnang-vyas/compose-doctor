@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16.4
+    expose:
+      - "5432"
+    ports:
+      - "127.0.0.1:5432:5432"
+      - "[::1]:5433:5432"
+      - "127.0.0.2:5434:5432"
+      - target: 5432
+        published: 5435
+        host_ip: 127.0.0.1
+      - "${DB_BIND}:5436:5432"
+  no_ports:
+    image: mysql:8.4
+  web:
+    image: nginx:1.27
+    ports:
+      - "80:80"
+      - "8443:443"
+      - "${WEB_PORT}:${WEB_TARGET}"
