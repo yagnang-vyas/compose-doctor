@@ -50,17 +50,25 @@ def load_bytes(data: bytes, path: str) -> ComposeFile:
 
 def load_text(text: str, path: str) -> ComposeFile:
     """Parse ``text`` and build a :class:`ComposeFile`. Raises :class:`InputError`."""
+    root = parse_mapping(text, path)
+    if root is None:
+        raise InputError("file is empty", file=path, line=1)
+    return ComposeFile(path=path, source=text, root=root, services=_services(root, path))
+
+
+def parse_mapping(text: str, path: str) -> LocatedMap | None:
+    """Parse a single YAML document whose top level must be a mapping.
+
+    Returns ``None`` for an empty document. Used for Compose files and the config file alike.
+    """
     root_node = _compose(text, path)
     if root_node is None:
-        raise InputError("file is empty", file=path, line=1)
+        return None
     if not isinstance(root_node, MappingNode):
         raise InputError("top-level value must be a mapping", file=path, line=_line(root_node))
-
     root = _Converter(path).convert(root_node)
     assert isinstance(root.value, LocatedMap)  # a MappingNode always converts to a LocatedMap
-    return ComposeFile(
-        path=path, source=text, root=root.value, services=_services(root.value, path)
-    )
+    return root.value
 
 
 def _compose(text: str, path: str) -> Node | None:

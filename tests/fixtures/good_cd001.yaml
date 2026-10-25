@@ -1,0 +1,19 @@
+services:
+  pinned:
+    image: postgres:16.4
+  digest:
+    image: postgres@sha256:0000000000000000000000000000000000000000000000000000000000000000
+  tag_and_digest:
+    image: postgres:latest@sha256:0000000000000000000000000000000000000000000000000000000000000000
+  interpolated_tag:
+    image: app:${TAG}
+  interpolated_tag_default:
+    image: app:${TAG:-1.0}
+  interpolated_whole:
+    image: ${IMAGE}
+  registry_port_pinned:
+    image: registry.local:5000/app:1.2
+  nested_pinned:
+    image: ghcr.io/org/team/app:2024.10.1
+  build_only:
+    build: .

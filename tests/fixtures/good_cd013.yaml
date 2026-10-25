@@ -1,0 +1,8 @@
+services:
+  web:
+    image: nginx:1.27
+  sidecar:
+    image: sidecar:1.0
+    pid: service:web
+    ipc: service:web
+    userns_mode: ""

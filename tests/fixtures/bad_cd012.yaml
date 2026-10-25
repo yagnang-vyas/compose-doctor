@@ -1,0 +1,9 @@
+services:
+  web:
+    image: nginx:1.27
+    security_opt:
+      - seccomp:unconfined # expect: CD012
+      - apparmor=unconfined # expect: CD012
+      - "seccomp=unconfined" # expect: CD012
+      - apparmor:unconfined # expect: CD012
+      - no-new-privileges:true

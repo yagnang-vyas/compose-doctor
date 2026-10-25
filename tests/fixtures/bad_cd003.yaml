@@ -1,0 +1,11 @@
+services:
+  traefik:
+    image: traefik:3.1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro # expect: CD003
+      - /run/docker.sock:/sock # expect: CD003
+      - //var/run/docker.sock:/sock2 # expect: CD003
+      - type: bind # expect: CD003
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+        read_only: true

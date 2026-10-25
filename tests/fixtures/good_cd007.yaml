@@ -1,0 +1,19 @@
+services:
+  web:
+    image: nginx:1.27
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+  db:
+    image: postgres:16.4
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app"]
+  app:
+    image: app:1.0
+    depends_on:
+      db:
+        condition: service_healthy
+  standalone:
+    image: worker:1.0
+    ports: []

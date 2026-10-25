@@ -1,0 +1,9 @@
+services:
+  web:
+    image: nginx:1.27
+    cap_add:
+      - NET_BIND_SERVICE
+      - CAP_CHOWN
+    cap_drop:
+      - ALL
+      - SYS_ADMIN

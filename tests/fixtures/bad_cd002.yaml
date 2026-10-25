@@ -1,0 +1,10 @@
+services:
+  web:
+    image: nginx:1.27
+    privileged: true # expect: CD002
+  agent:
+    image: agent:1.0
+    privileged: yes # expect: CD002
+  quoted:
+    image: agent:1.0
+    privileged: "true" # expect: CD002

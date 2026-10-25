@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, TypeAlias, TypeVar, Union
 
-T = TypeVar("T")
+T = TypeVar("T", covariant=True)
 
 Scalar: TypeAlias = str | int | float | bool | None
 """A typed YAML scalar, as resolved by the YAML 1.1 rules PyYAML applies."""

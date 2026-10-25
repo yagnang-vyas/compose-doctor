@@ -112,28 +112,28 @@ values from the document.
 
 ## 6. Acceptance criteria
 
-- [ ] `pip install .` into a fresh virtual environment works, and `compose-doctor --version`
+- [x] `pip install .` into a fresh virtual environment works, and `compose-doctor --version`
       prints `compose-doctor 0.1.0`.
-- [ ] `python -m compose_doctor` behaves the same as `compose-doctor`.
-- [ ] The loader reports correct 1-based lines for keys and list items, including values reached
+- [x] `python -m compose_doctor` behaves the same as `compose-doctor`.
+- [x] The loader reports correct 1-based lines for keys and list items, including values reached
       through aliases and merge keys.
-- [ ] Merge keys follow YAML 1.1 precedence (explicit keys win; earlier merge-list entries win).
-- [ ] An alias bomb is rejected with an `InputError` instead of exhausting memory.
-- [ ] Every loader error case reports the file and the correct line.
-- [ ] Interpolation detection covers every form in the brief and ignores `$$`.
-- [ ] Each of rules CD001–CD015 has passing good and bad fixture tests, including every
+- [x] Merge keys follow YAML 1.1 precedence (explicit keys win; earlier merge-list entries win).
+- [x] An alias bomb is rejected with an `InputError` instead of exhausting memory.
+- [x] Every loader error case reports the file and the correct line.
+- [x] Interpolation detection covers every form in the brief and ignores `$$`.
+- [x] Each of rules CD001–CD015 has passing good and bad fixture tests, including every
       "must not trigger" case.
-- [ ] An unparseable port entry produces a `CD000` finding instead of a crash.
-- [ ] Inline suppressions (same line and line above), `ignore-file`, config ignores, per-service
+- [x] An unparseable port entry produces a `CD000` finding instead of a crash.
+- [x] Inline suppressions (same line and line above), `ignore-file`, config ignores, per-service
       ignores and severity overrides work; unknown rule IDs are rejected.
-- [ ] Suppressed findings are counted in every output format and listed with `--show-suppressed`.
-- [ ] Text, JSON and SARIF output match the documented shapes; SARIF results reference valid rules.
-- [ ] Every documented exit code (0, 1, 2, 130, 141) is tested.
-- [ ] No environment value from the input appears in any output format or error message.
-- [ ] `examples/hardened/compose.yaml` produces zero findings; `examples/insecure/compose.yaml`
+- [x] Suppressed findings are counted in every output format and listed with `--show-suppressed`.
+- [x] Text, JSON and SARIF output match the documented shapes; SARIF results reference valid rules.
+- [x] Every documented exit code (0, 1, 2, 130, 141) is tested.
+- [x] No environment value from the input appears in any output format or error message.
+- [x] `examples/hardened/compose.yaml` produces zero findings; `examples/insecure/compose.yaml`
       triggers at least 12 rules.
-- [ ] README sample output is real and the rule table matches `--list-rules`.
-- [ ] `make check` passes: ruff, ruff format, mypy strict, pytest with ≥90% branch coverage.
+- [x] README sample output is real and the rule table matches `--list-rules`.
+- [x] `make check` passes: ruff, ruff format, mypy strict, pytest with ≥90% branch coverage.
 
 ## 7. Test plan
 
@@ -176,9 +176,9 @@ Judgment calls where the implementation brief was ambiguous or was overridden:
    repository is pushed there.
 2. **Milestone-0 CLI.** The scaffold milestone's CLI supports `--version` only; the full interface
    in §4 arrives with the CLI milestone.
-3. **Repository URL.** The GitHub repository is `ChakraCoder/compse-doctor`, so project URLs,
-   the CI badge and the SARIF `informationUri` use that name instead of the brief's
-   `compose-doctor`. The package and command are still `compose-doctor`.
+3. **Repository URL.** The repository lives at `yagnang-vyass/Compse-Doctor`, so project URLs,
+   the CI badge and the SARIF `informationUri` use that location instead of the brief's
+   `ChakraCoder/compose-doctor`. The package and command are still `compose-doctor`.
 4. **Duplicate keys.** PyYAML silently keeps the last of two identical keys. Docker Compose
    rejects such files, and a silently dropped value hides mistakes, so the loader raises an
    `InputError` at the second key.
@@ -188,3 +188,45 @@ Judgment calls where the implementation brief was ambiguous or was overridden:
    keep their source text as a string. No other constructors are ever run.
 7. **Recursive aliases and deep nesting.** A self-referencing anchor (`&a [*a]`) and nesting deeper
    than 100 levels raise `InputError` instead of exhausting the Python stack.
+8. **One commit for all rules.** The brief splits the rules over two milestones (CD001–CD008,
+   then CD009–CD015 and CD000). They share parsers and helpers that were written together, so they
+   landed in one reviewed commit and pull request.
+9. **CD009 only fires when the dependency has a healthcheck,** for both the short list form and the
+   long form with `condition: service_started`. A dependency without a healthcheck cannot be waited
+   on with `service_healthy`; CD007 already reports it, so it gets one finding, not two.
+10. **CD007 treats `test: ["NONE"]` like `disable: true`:** both are explicit opt-outs and are
+    reported as a note.
+11. **CD008 also flags `deploy.restart_policy.condition: none`,** which means the same as
+    `restart: "no"`.
+12. **CD005 flags a port with no host port (`"5432"`),** because Docker publishes it on a random host
+    port on every interface, and flags a specific non-loopback host IP such as `192.168.1.10`. A
+    host IP that is interpolated (`${BIND_IP}:5432:5432`) is unknown and not flagged.
+13. **CD000 checks more than ports.** It also reports entries the rules cannot read: malformed
+    volumes, non-string environment list items, wrong value types for `ports`, `volumes`,
+    `cap_add`, `security_opt`, `depends_on`, `environment` and `image`, unknown restart policies,
+    and `depends_on` entries naming a service that does not exist. Its messages never quote
+    environment values.
+14. **YAML 1.1 sexagesimal ports.** An unquoted `22:22` is the integer 1342 in YAML 1.1. Port
+    parsing reads the scalar's source text, so it is understood as `22:22`, as Docker Compose does.
+15. **Line-above suppressions** apply only when the comment is on a line of its own. A trailing
+    comment (`ports: # compose-doctor: ignore CD005`) covers its own line, not the next one, so a
+    suppression never silently reaches further than it looks.
+16. **Suppression comments are validated.** An unknown rule ID or an empty ID list in a
+    `# compose-doctor:` comment is an input error (exit 2), like an unknown ID in the config file,
+    so a typo cannot silently suppress nothing. A free-text reason may follow `--`.
+17. **JSON findings include `column`.** It is additive to the shape in the brief and matches the
+    `line:column` in text output and `startColumn` in SARIF. With `--show-suppressed`, JSON also
+    gets a `suppressed` array whose entries add `"suppression": "inline" | "config"`.
+18. **SARIF always includes suppressed results** (with `suppressions`), whether or not
+    `--show-suppressed` is given, so code scanning shows them as dismissed. Standard input is
+    reported with the URI `stdin`; a file outside the working directory gets an absolute `file://`
+    URI.
+19. **An input error stops the run.** If any file cannot be read or parsed, Compose Doctor reports
+    that error and exits 2 without a partial report, so CI never treats an unparsed file as clean.
+20. **Exit 130** is tested in-process (a `KeyboardInterrupt` raised inside the run); delivering a
+    real SIGINT to a subprocess at the right moment cannot be done deterministically.
+21. **README sections are generated.** `scripts/update_readme.py` writes the sample output, the
+    JSON example and the rule table into README.md by running the CLI, and a test fails when they
+    are stale, so the README cannot drift from the tool.
+22. **Examples landed with the CLI milestone,** one step earlier than the brief's plan, because the
+    golden and SARIF integration tests in that milestone run against them.

@@ -1,0 +1,13 @@
+services:
+  web:
+    image: nginx:1.27
+    volumes:
+      - docker-sock:/var/run/docker.sock
+      - ./docker.sock:/var/run/docker.sock
+      - /srv/app/data:/data
+      - type: volume
+        source: docker.sock
+        target: /var/run/docker.sock
+volumes:
+  docker-sock:
+  docker.sock:

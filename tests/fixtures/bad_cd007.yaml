@@ -1,0 +1,26 @@
+services:
+  web: # expect: CD007
+    image: nginx:1.27
+    ports:
+      - "80:80"
+  db: # expect: CD007
+    image: postgres:16.4
+  app:
+    image: app:1.0
+    depends_on:
+      - db
+  cache:
+    image: redis:7.4
+    healthcheck: # expect: CD007
+      disable: true
+  worker:
+    image: worker:1.0
+    depends_on:
+      cache:
+        condition: service_started
+  queue:
+    image: rabbitmq:4.0
+    healthcheck: # expect: CD007
+      test: ["NONE"]
+    ports:
+      - "127.0.0.1:5672:5672"
