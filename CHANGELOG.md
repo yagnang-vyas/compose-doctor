@@ -30,4 +30,4 @@ All notable changes to this project are documented here. The format follows
 - Insecure and hardened example stacks, CI on Python 3.10–3.13, and a manually triggered SARIF
   upload workflow.
 
-[0.1.0]: https://github.com/yagnang-vyass/Compse-Doctor/releases/tag/v0.1.0
+[0.1.0]: https://github.com/yagnang-vyas/compose-doctor/releases/tag/v0.1.0

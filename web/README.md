@@ -1,5 +1,7 @@
 # Compose Doctor web playground
 
+Live at **[compose-doctor.netlify.app](https://compose-doctor.netlify.app/)**.
+
 A landing page, documentation and an interactive playground for Compose Doctor. The playground
 runs the **real, unmodified `compose_doctor` Python package** in the visitor's browser, so every
 finding it shows is genuine analyzer output. Nothing is sent to a server.

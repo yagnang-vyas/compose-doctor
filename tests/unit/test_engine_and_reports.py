@@ -147,7 +147,7 @@ def test_sarif_report() -> None:
     (run,) = data["runs"]
     driver = run["tool"]["driver"]
     assert driver["name"] == "compose-doctor"
-    assert driver["informationUri"] == "https://github.com/yagnang-vyass/Compse-Doctor"
+    assert driver["informationUri"] == "https://github.com/yagnang-vyas/compose-doctor"
     assert [rule["id"] for rule in driver["rules"]] == [rule.id for rule in RULES]
     assert driver["rules"][9]["name"] == "DependsOnWithoutHealthCondition"
     for rule in driver["rules"]:
