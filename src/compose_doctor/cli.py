@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import os
 import sys
 from collections.abc import Sequence
@@ -38,22 +39,20 @@ class _Parser(argparse.ArgumentParser):
         self.exit(EXIT_USAGE, f"{self.prog}: error: {message}\n")
 
 
+DESCRIPTION = "Lint Docker Compose files for security, misconfiguration and reliability problems."
+EPILOG = (
+    "exit codes: 0 no unsuppressed finding at or above --fail-on, 1 at least one such finding, "
+    "2 usage or input error, 130 interrupted, 141 output pipe closed"
+)
+FILES_HELP = (
+    f"Compose files to lint; '-' reads standard input (default: the first of "
+    f"{', '.join(DEFAULT_FILES)} in the current directory)"
+)
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = _Parser(
-        prog=PROG,
-        description="Lint Docker Compose files for security, misconfiguration and reliability "
-        "problems.",
-        epilog="Exit codes: 0 no findings at or above --fail-on, 1 findings, 2 usage or input "
-        "error, 130 interrupted.",
-    )
-    parser.add_argument(
-        "files",
-        nargs="*",
-        metavar="FILE",
-        help="Compose files to lint; '-' reads standard input. Default: the first of "
-        + ", ".join(DEFAULT_FILES)
-        + " in the current directory.",
-    )
+    parser = _Parser(prog=PROG, description=DESCRIPTION, epilog=EPILOG)
+    parser.add_argument("files", nargs="*", metavar="FILE", help=FILES_HELP)
     parser.add_argument("--version", action="version", version=f"{PROG} {__version__}")
     parser.add_argument(
         "--format", choices=FORMATS, default="text", help="output format (default: text)"
@@ -148,12 +147,12 @@ def _run(argv: Sequence[str] | None, stdout: TextIO, stdin: TextIO) -> int:
     if paths.count("-") > 1:
         parser.error("standard input ('-') can only be given once")
 
-    config = _config(args)
-    config = Config(
-        ignore=config.ignore | cli_ignores,
-        service_ignores=config.service_ignores,
-        severity=config.severity,
-        fail_on=args.fail_on or config.fail_on,
+    file_config = _config(args)
+    # Command-line flags add to (--ignore) or override (--fail-on) the config file.
+    config = dataclasses.replace(
+        file_config,
+        ignore=file_config.ignore | cli_ignores,
+        fail_on=args.fail_on or file_config.fail_on,
     )
     files = [_read(path, stdin) for path in paths]
     report = lint(files, config)
