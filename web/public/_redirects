@@ -1,0 +1,2 @@
+# Client-side routes: serve the app shell for any path that is not a file.
+/*    /index.html    200
