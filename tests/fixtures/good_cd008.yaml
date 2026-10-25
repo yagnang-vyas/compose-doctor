@@ -1,0 +1,23 @@
+services:
+  always:
+    image: nginx:1.27
+    restart: always
+  unless_stopped:
+    image: nginx:1.27
+    restart: unless-stopped
+  on_failure:
+    image: nginx:1.27
+    restart: on-failure
+  on_failure_count:
+    image: nginx:1.27
+    restart: on-failure:5
+  deploy_policy:
+    image: nginx:1.27
+    deploy:
+      restart_policy:
+        condition: on-failure
+  deploy_policy_default:
+    image: nginx:1.27
+    deploy:
+      restart_policy:
+        max_attempts: 3

@@ -1,0 +1,18 @@
+services:
+  db:
+    image: postgres:16.4
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+      APP_SECRET: ""
+      GITHUB_TOKEN:
+      API_KEY: ${API_KEY:?set API_KEY}
+      POSTGRES_USER: app
+  worker:
+    image: worker:1.0
+    environment:
+      - DB_PASSWORD
+      - API_TOKEN=
+      - API_TOKEN_FILE=/run/secrets/token
+      - SECRET_KEY=${SECRET_KEY}
+      - LOG_LEVEL=info

@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16.4
+    environment:
+      POSTGRES_PASSWORD: fake-pass-123 # expect: CD006
+      APP_SECRET: fake-secret # expect: CD006
+      GITHUB_TOKEN: fake-token-abc # expect: CD006
+      STRIPE_API_KEY: fake-key # expect: CD006
+      AWS_ACCESS_KEY: fake-access # expect: CD006
+      SSH_PRIVATE_KEY: fake-private # expect: CD006
+      db_credentials: fake-cred # expect: CD006
+      MYSQL_PASS: 12345 # expect: CD006
+  worker:
+    image: worker:1.0
+    environment:
+      - API_TOKEN=fake-token-xyz # expect: CD006
+      - "APIKEY=fake-apikey" # expect: CD006

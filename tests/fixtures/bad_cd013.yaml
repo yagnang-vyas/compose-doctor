@@ -1,0 +1,6 @@
+services:
+  monitor:
+    image: monitor:1.0
+    pid: host # expect: CD013
+    ipc: host # expect: CD013
+    userns_mode: host # expect: CD013

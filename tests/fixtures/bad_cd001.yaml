@@ -1,0 +1,11 @@
+services:
+  no_tag:
+    image: nginx # expect: CD001
+  latest:
+    image: nginx:latest # expect: CD001
+  registry_port_no_tag:
+    image: registry.local:5000/app # expect: CD001
+  nested_latest:
+    image: ghcr.io/org/team/app:latest # expect: CD001
+  interpolated_registry:
+    image: ${REGISTRY}/app # expect: CD001

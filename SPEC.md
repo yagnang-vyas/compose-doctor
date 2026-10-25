@@ -188,3 +188,23 @@ Judgment calls where the implementation brief was ambiguous or was overridden:
    keep their source text as a string. No other constructors are ever run.
 7. **Recursive aliases and deep nesting.** A self-referencing anchor (`&a [*a]`) and nesting deeper
    than 100 levels raise `InputError` instead of exhausting the Python stack.
+8. **One commit for all rules.** The brief splits the rules over two milestones (CD001–CD008,
+   then CD009–CD015 and CD000). They share parsers and helpers that were written together, so they
+   landed in one reviewed commit and pull request.
+9. **CD009 only fires when the dependency has a healthcheck,** for both the short list form and the
+   long form with `condition: service_started`. A dependency without a healthcheck cannot be waited
+   on with `service_healthy`; CD007 already reports it, so it gets one finding, not two.
+10. **CD007 treats `test: ["NONE"]` like `disable: true`:** both are explicit opt-outs and are
+    reported as a note.
+11. **CD008 also flags `deploy.restart_policy.condition: none`,** which means the same as
+    `restart: "no"`.
+12. **CD005 flags a port with no host port (`"5432"`),** because Docker publishes it on a random host
+    port on every interface, and flags a specific non-loopback host IP such as `192.168.1.10`. A
+    host IP that is interpolated (`${BIND_IP}:5432:5432`) is unknown and not flagged.
+13. **CD000 checks more than ports.** It also reports entries the rules cannot read: malformed
+    volumes, non-string environment list items, wrong value types for `ports`, `volumes`,
+    `cap_add`, `security_opt`, `depends_on`, `environment` and `image`, unknown restart policies,
+    and `depends_on` entries naming a service that does not exist. Its messages never quote
+    environment values.
+14. **YAML 1.1 sexagesimal ports.** An unquoted `22:22` is the integer 1342 in YAML 1.1. Port
+    parsing reads the scalar's source text, so it is understood as `22:22`, as Docker Compose does.

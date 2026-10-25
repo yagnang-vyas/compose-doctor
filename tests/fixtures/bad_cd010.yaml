@@ -1,0 +1,9 @@
+services:
+  web: # expect: CD010
+    image: nginx:1.27
+  partial_deploy: # expect: CD010
+    image: nginx:1.27
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"

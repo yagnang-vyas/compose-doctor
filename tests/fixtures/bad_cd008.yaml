@@ -1,0 +1,14 @@
+services:
+  absent: # expect: CD008
+    image: nginx:1.27
+  quoted_no:
+    image: nginx:1.27
+    restart: "no" # expect: CD008
+  bare_no:
+    image: nginx:1.27
+    restart: no # expect: CD008
+  deploy_none:
+    image: nginx:1.27
+    deploy:
+      restart_policy:
+        condition: none # expect: CD008
