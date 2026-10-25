@@ -41,5 +41,6 @@ def test_main_module_entry_point(
     assert "0.1.0" in capsys.readouterr().out
 
 
-def test_main_without_arguments_returns_zero() -> None:
-    assert main([]) == 0
+def test_list_rules_returns_zero(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(["--list-rules"]) == 0
+    assert "CD001" in capsys.readouterr().out

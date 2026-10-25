@@ -92,8 +92,9 @@ MISSING_HEALTHCHECK = Rule(
         "never reported as unhealthy. An explicitly disabled healthcheck is reported as a note."
     ),
     fix=(
-        'Add a healthcheck, for example: healthcheck: {test: ["CMD", "pg_isready"], '
-        "interval: 10s, timeout: 5s, retries: 5}."
+        "Add a healthcheck that proves the service is serving, for example "
+        'test: ["CMD-SHELL", "pg_isready -U app"] for PostgreSQL, with interval, timeout '
+        "and retries."
     ),
     check=check_missing_healthcheck,
 )

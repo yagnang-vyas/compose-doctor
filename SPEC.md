@@ -208,3 +208,20 @@ Judgment calls where the implementation brief was ambiguous or was overridden:
     environment values.
 14. **YAML 1.1 sexagesimal ports.** An unquoted `22:22` is the integer 1342 in YAML 1.1. Port
     parsing reads the scalar's source text, so it is understood as `22:22`, as Docker Compose does.
+15. **Line-above suppressions** apply only when the comment is on a line of its own. A trailing
+    comment (`ports: # compose-doctor: ignore CD005`) covers its own line, not the next one, so a
+    suppression never silently reaches further than it looks.
+16. **Suppression comments are validated.** An unknown rule ID or an empty ID list in a
+    `# compose-doctor:` comment is an input error (exit 2), like an unknown ID in the config file,
+    so a typo cannot silently suppress nothing. A free-text reason may follow `--`.
+17. **JSON findings include `column`.** It is additive to the shape in the brief and matches the
+    `line:column` in text output and `startColumn` in SARIF. With `--show-suppressed`, JSON also
+    gets a `suppressed` array whose entries add `"suppression": "inline" | "config"`.
+18. **SARIF always includes suppressed results** (with `suppressions`), whether or not
+    `--show-suppressed` is given, so code scanning shows them as dismissed. Standard input is
+    reported with the URI `stdin`; a file outside the working directory gets an absolute `file://`
+    URI.
+19. **An input error stops the run.** If any file cannot be read or parsed, Compose Doctor reports
+    that error and exits 2 without a partial report, so CI never treats an unparsed file as clean.
+20. **Exit 130** is tested in-process (a `KeyboardInterrupt` raised inside the run); delivering a
+    real SIGINT to a subprocess at the right moment cannot be done deterministically.
