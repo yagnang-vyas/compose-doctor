@@ -176,3 +176,15 @@ Judgment calls where the implementation brief was ambiguous or was overridden:
    repository is pushed there.
 2. **Milestone-0 CLI.** The scaffold milestone's CLI supports `--version` only; the full interface
    in §4 arrives with the CLI milestone.
+3. **Repository URL.** The GitHub repository is `ChakraCoder/compse-doctor`, so project URLs,
+   the CI badge and the SARIF `informationUri` use that name instead of the brief's
+   `compose-doctor`. The package and command are still `compose-doctor`.
+4. **Duplicate keys.** PyYAML silently keeps the last of two identical keys. Docker Compose
+   rejects such files, and a silently dropped value hides mistakes, so the loader raises an
+   `InputError` at the second key.
+5. **Keys keep their source text.** Mapping keys are not typed: `on:` stays `"on"` rather than
+   becoming `True`, and `80:` stays `"80"`.
+6. **Tags outside the YAML core schema** (timestamps, binary, Compose's `!reset` and `!override`)
+   keep their source text as a string. No other constructors are ever run.
+7. **Recursive aliases and deep nesting.** A self-referencing anchor (`&a [*a]`) and nesting deeper
+   than 100 levels raise `InputError` instead of exhausting the Python stack.
