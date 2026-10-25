@@ -1,0 +1,6 @@
+# This file is not valid YAML: the flow sequence on the ports line is never closed.
+services:
+  web:
+    image: nginx:1.27.2
+    ports: ["8080:80"
+    restart: unless-stopped

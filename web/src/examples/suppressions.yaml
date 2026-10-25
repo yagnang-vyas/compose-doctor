@@ -1,0 +1,40 @@
+# Suppression comments and YAML anchors. Shared settings live in an x- block; findings
+# about inherited values point at the line where the value is defined.
+# compose-doctor: ignore-file CD015 -- container names are required by our log shipper
+
+x-service: &service
+  restart: unless-stopped
+  mem_limit: 256m
+
+x-debug: &debug
+  cap_add:
+    - SYS_PTRACE
+
+services:
+  proxy:
+    <<: *service
+    image: nginx:1.27.2
+    container_name: proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    # compose-doctor: ignore CD007 -- the image's Dockerfile defines a HEALTHCHECK
+    healthcheck:
+      disable: true
+
+  replica:
+    <<: *service
+    image: postgres:16.4
+    container_name: replica
+    ports:
+      # compose-doctor: ignore CD005 -- only reachable through the VPN interface
+      - "10.8.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reports"]
+      interval: 10s
+
+  reports:
+    <<: [*service, *debug]
+    image: example/reports:1.2.0
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]

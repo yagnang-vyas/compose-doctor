@@ -1,0 +1,13 @@
+# Entries Docker Compose would reject or silently misread (rule CD000).
+services:
+  web:
+    image: nginx:1.27.2
+    ports:
+      - "99999:80"
+      - "8080:80/icmp"
+    depends_on:
+      - api
+    restart: sometimes
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/"]

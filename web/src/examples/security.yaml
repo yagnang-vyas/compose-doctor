@@ -1,0 +1,37 @@
+# A self-hosted CI runner and monitoring stack with risky host access.
+# Every token below is fake.
+services:
+  runner:
+    image: example/ci-runner:2.3.1
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host:ro
+    environment:
+      RUNNER_TOKEN: fake-runner-token-123
+    restart: unless-stopped
+    mem_limit: 2g
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    network_mode: host
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    restart: unless-stopped
+    mem_limit: 128m
+
+  vpn:
+    image: example/wireguard:1.0.20210914
+    cap_add:
+      - NET_ADMIN
+    security_opt:
+      - apparmor=unconfined
+    ports:
+      - "51820:51820/udp"
+    healthcheck:
+      test: ["CMD", "wg", "show"]
+      interval: 30s
+    restart: unless-stopped
+    mem_limit: 64m

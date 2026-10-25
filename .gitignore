@@ -29,3 +29,8 @@ env/
 .idea/
 .vscode/
 .DS_Store
+
+# Web playground
+web/node_modules/
+web/dist/
+web/public/runtime/
