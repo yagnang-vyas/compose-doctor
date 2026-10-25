@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Web playground in `web/`: a landing page, docs, examples and an editor that runs the real
+  `compose_doctor` package in the browser with Pyodide, with Netlify configuration and CI.
+
 ## [0.1.0] - 2026-10-25
 
 ### Added

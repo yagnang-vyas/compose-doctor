@@ -1,0 +1,37 @@
+# An API with PostgreSQL and Redis that will race its database on every cold start
+# and stay down after a crash.
+services:
+  api:
+    image: example/orders-api:latest
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      DATABASE_URL: postgres://orders@db:5432/orders
+      REDIS_URL: redis://cache:6379/0
+    depends_on:
+      - db
+      - cache
+
+  db:
+    image: postgres:16.4
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orders"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    mem_limit: 1g
+
+  cache:
+    image: redis
+    container_name: orders-cache
+    restart: "no"
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt

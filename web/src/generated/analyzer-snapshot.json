@@ -1,0 +1,200 @@
+{
+  "version": "0.1.0",
+  "rules": [
+    {
+      "id": "CD000",
+      "title": "Invalid configuration",
+      "severity": "error",
+      "rationale": "An entry that does not follow the Compose specification is either rejected by Docker Compose or silently means something other than intended, and the other rules cannot check it.",
+      "fix": "Correct the entry using the syntax in the Compose specification."
+    },
+    {
+      "id": "CD001",
+      "title": "Unpinned image",
+      "severity": "warning",
+      "rationale": "An image without a tag, or with the 'latest' tag, can change underneath you: a redeploy or a fresh host silently pulls a different version, which breaks reproducibility and can introduce untested or vulnerable code.",
+      "fix": "Pin a specific version tag (postgres:16.4) or a digest (image@sha256:...)."
+    },
+    {
+      "id": "CD002",
+      "title": "Privileged container",
+      "severity": "error",
+      "rationale": "A privileged container gets every Linux capability and access to all host devices, and most isolation between it and the host is turned off. A compromise of the container is effectively a compromise of the host.",
+      "fix": "Remove 'privileged: true' and grant only the specific capabilities or devices needed."
+    },
+    {
+      "id": "CD003",
+      "title": "Docker socket mounted",
+      "severity": "error",
+      "rationale": "Access to the Docker socket is root access to the host: anything in the container can start a privileged container that mounts the host filesystem. This applies even to a read-only mount, because the socket accepts API calls either way.",
+      "fix": "Remove the socket mount. If the service really needs the Docker API, put a filtering proxy (for example docker-socket-proxy) in front of it and allow only the calls it needs."
+    },
+    {
+      "id": "CD004",
+      "title": "Host network mode",
+      "severity": "warning",
+      "rationale": "With 'network_mode: host' every port the container listens on is open on the host's interfaces, bypassing Compose port mapping, and the container can reach services bound to the host's loopback address.",
+      "fix": "Remove 'network_mode: host' and publish only the ports you need with 'ports:'."
+    },
+    {
+      "id": "CD005",
+      "title": "Database port exposed on all interfaces",
+      "severity": "error",
+      "rationale": "Publishing a database port without a loopback host IP makes it reachable from every network the host is on, and Docker's iptables rules bypass host firewalls such as ufw. Exposed databases are found and attacked within hours.",
+      "fix": "Remove the port mapping and connect over the Compose network, or bind it to loopback, for example '127.0.0.1:5432:5432'."
+    },
+    {
+      "id": "CD006",
+      "title": "Hard-coded secret in environment",
+      "severity": "error",
+      "rationale": "A password, token or key written into the Compose file ends up in version control, in 'docker inspect' output and in anyone's copy of the repository. Rotating it means rewriting history.",
+      "fix": "Load it from the environment or an untracked .env file (KEY: ${KEY}), or use Docker secrets with a *_FILE variable."
+    },
+    {
+      "id": "CD007",
+      "title": "No healthcheck",
+      "severity": "warning",
+      "rationale": "Without a healthcheck Docker only knows whether the process is running, not whether it is serving. Dependent services cannot wait for it to be ready, and a hung process is never reported as unhealthy. An explicitly disabled healthcheck is reported as a note.",
+      "fix": "Add a healthcheck that proves the service is serving, for example test: [\"CMD-SHELL\", \"pg_isready -U app\"] for PostgreSQL, with interval, timeout and retries."
+    },
+    {
+      "id": "CD008",
+      "title": "No restart policy",
+      "severity": "warning",
+      "rationale": "Docker's default is not to restart containers. After a crash or a host reboot the service stays down until someone notices.",
+      "fix": "Set 'restart: unless-stopped' (or 'always' / 'on-failure')."
+    },
+    {
+      "id": "CD009",
+      "title": "depends_on without health condition",
+      "severity": "warning",
+      "rationale": "Plain 'depends_on' only waits for the dependency's container to start, not for it to be ready, so the service races its database on every cold start. When the dependency has a healthcheck, Compose can wait for it properly. Dependencies without a healthcheck are reported by CD007 instead.",
+      "fix": "Use the long form: depends_on: {db: {condition: service_healthy}}."
+    },
+    {
+      "id": "CD010",
+      "title": "No memory limit",
+      "severity": "note",
+      "rationale": "Without a memory limit one leaking or overloaded container can consume all host memory and trigger the kernel's OOM killer against unrelated services, including the database.",
+      "fix": "Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'."
+    },
+    {
+      "id": "CD011",
+      "title": "Dangerous capability",
+      "severity": "error",
+      "rationale": "SYS_ADMIN is close to full root, SYS_MODULE loads kernel modules, SYS_PTRACE can read other processes' memory, NET_ADMIN reconfigures host-visible networking, and ALL grants everything. Each one widens the path from a compromised container to the host.",
+      "fix": "Remove the capability, or replace it with the narrowest one the service needs."
+    },
+    {
+      "id": "CD012",
+      "title": "Security profile disabled",
+      "severity": "error",
+      "rationale": "Docker's default seccomp and AppArmor profiles block system calls and file accesses that containers almost never need but exploits often do. Running unconfined removes that layer of defence.",
+      "fix": "Remove the 'unconfined' option. If a specific call is blocked, use a custom profile that allows only that call."
+    },
+    {
+      "id": "CD013",
+      "title": "Host namespace shared",
+      "severity": "warning",
+      "rationale": "Sharing the host's PID namespace lets the container see and signal host processes; sharing IPC exposes host shared memory; 'userns_mode: host' disables user-namespace remapping so container root is host root.",
+      "fix": "Remove the setting so the container gets its own namespace."
+    },
+    {
+      "id": "CD014",
+      "title": "Sensitive host path mounted",
+      "severity": "error",
+      "rationale": "Mounting the host root, system configuration (/etc), root's home, kernel interfaces (/proc, /sys), the boot partition or Docker's own data directory gives the container a way to read secrets from, or tamper with, the host.",
+      "fix": "Mount only the specific application directory the service needs, read-only if possible."
+    },
+    {
+      "id": "CD015",
+      "title": "Fixed container_name",
+      "severity": "note",
+      "rationale": "A fixed container name prevents scaling the service beyond one replica and clashes when two Compose projects on the same host use the same name. Compose already gives each container a unique, predictable name.",
+      "fix": "Remove 'container_name' and refer to the service by its service name."
+    }
+  ],
+  "preview": {
+    "source": "services:\n  db:\n    image: postgres\n    ports:\n      - \"5432:5432\"\n    environment:\n      POSTGRES_PASSWORD: fake-pass-123\n",
+    "text": "compose.yaml:2:3 warning CD007 [db] Service has no healthcheck although it publishes ports\n    fix: Add a healthcheck that proves the service is serving, for example test: [\"CMD-SHELL\", \"pg_isready -U app\"] for PostgreSQL, with interval, timeout and retries.\ncompose.yaml:2:3 warning CD008 [db] Service has no restart policy\n    fix: Set 'restart: unless-stopped' (or 'always' / 'on-failure').\ncompose.yaml:2:3 note CD010 [db] Service has no memory limit\n    fix: Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'.\ncompose.yaml:3:5 warning CD001 [db] Image 'postgres' has no tag, so it resolves to 'latest'\n    fix: Pin a specific version tag (postgres:16.4) or a digest (image@sha256:...).\ncompose.yaml:5:9 error CD005 [db] PostgreSQL container port 5432 is published on all interfaces\n    fix: Remove the port mapping and connect over the Compose network, or bind it to loopback, for example '127.0.0.1:5432:5432'.\ncompose.yaml:7:7 error CD006 [db] Environment variable 'POSTGRES_PASSWORD' has a hard-coded secret value\n    fix: Load it from the environment or an untracked .env file (KEY: ${KEY}), or use Docker secrets with a *_FILE variable.\n\n2 errors, 3 warnings, 1 note, 0 suppressed in 1 file\n",
+    "report": {
+      "schema_version": 1,
+      "tool": {
+        "name": "compose-doctor",
+        "version": "0.1.0"
+      },
+      "files": [
+        "compose.yaml"
+      ],
+      "summary": {
+        "error": 2,
+        "warning": 3,
+        "note": 1,
+        "suppressed": 0
+      },
+      "findings": [
+        {
+          "rule_id": "CD007",
+          "severity": "warning",
+          "file": "compose.yaml",
+          "line": 2,
+          "column": 3,
+          "service": "db",
+          "message": "Service has no healthcheck although it publishes ports",
+          "fix": "Add a healthcheck that proves the service is serving, for example test: [\"CMD-SHELL\", \"pg_isready -U app\"] for PostgreSQL, with interval, timeout and retries."
+        },
+        {
+          "rule_id": "CD008",
+          "severity": "warning",
+          "file": "compose.yaml",
+          "line": 2,
+          "column": 3,
+          "service": "db",
+          "message": "Service has no restart policy",
+          "fix": "Set 'restart: unless-stopped' (or 'always' / 'on-failure')."
+        },
+        {
+          "rule_id": "CD010",
+          "severity": "note",
+          "file": "compose.yaml",
+          "line": 2,
+          "column": 3,
+          "service": "db",
+          "message": "Service has no memory limit",
+          "fix": "Set 'mem_limit: 512m' or 'deploy.resources.limits.memory: 512M'."
+        },
+        {
+          "rule_id": "CD001",
+          "severity": "warning",
+          "file": "compose.yaml",
+          "line": 3,
+          "column": 5,
+          "service": "db",
+          "message": "Image 'postgres' has no tag, so it resolves to 'latest'",
+          "fix": "Pin a specific version tag (postgres:16.4) or a digest (image@sha256:...)."
+        },
+        {
+          "rule_id": "CD005",
+          "severity": "error",
+          "file": "compose.yaml",
+          "line": 5,
+          "column": 9,
+          "service": "db",
+          "message": "PostgreSQL container port 5432 is published on all interfaces",
+          "fix": "Remove the port mapping and connect over the Compose network, or bind it to loopback, for example '127.0.0.1:5432:5432'."
+        },
+        {
+          "rule_id": "CD006",
+          "severity": "error",
+          "file": "compose.yaml",
+          "line": 7,
+          "column": 7,
+          "service": "db",
+          "message": "Environment variable 'POSTGRES_PASSWORD' has a hard-coded secret value",
+          "fix": "Load it from the environment or an untracked .env file (KEY: ${KEY}), or use Docker secrets with a *_FILE variable."
+        }
+      ],
+      "suppressed": []
+    }
+  }
+}

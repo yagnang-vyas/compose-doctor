@@ -145,6 +145,12 @@ No problems found in 1 file.
 ```
 <!-- /generated:hardened-output -->
 
+## Web playground
+
+[`web/`](web/) holds a landing page and a browser playground that runs this exact Python package
+with Pyodide (WebAssembly), so you can try Compose Doctor without installing it. Your YAML stays
+in the browser. See [web/README.md](web/README.md) for the architecture and Netlify deployment.
+
 ## Rules
 
 Generated from `compose-doctor --list-rules`, which also prints each rule's fix.

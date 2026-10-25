@@ -1,0 +1,11 @@
+# Netlify builds and serves the web playground in web/. The site is fully static: the analyzer
+# runs in the visitor's browser (Pyodide), so there are no functions and no environment variables.
+# Response headers and the client-side route fallback live in web/public/_headers and _redirects.
+
+[build]
+  base = "web"
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
