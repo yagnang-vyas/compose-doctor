@@ -1,0 +1,178 @@
+# Compose Doctor — Specification
+
+Version 0.1.0
+
+## 1. Problem
+
+Docker Compose files are often copied from tutorials and reach production with `latest` image tags,
+databases published on every network interface, the Docker socket mounted into containers,
+plain-text passwords in `environment:`, no healthchecks and no restart policy. Nothing flags these
+until something breaks or leaks.
+
+## 2. Users
+
+Developers and small teams who self-host with Docker Compose, often on a single VPS behind a
+reverse proxy, and who want a fast check in their editor loop and in CI.
+
+## 3. Scope
+
+Compose Doctor reads one or more Compose files, runs a set of documented rules, and reports findings
+with a rule ID, severity, file, line and a concrete fix. It produces Text, JSON and SARIF 2.1.0
+output, and its exit codes make it usable as a CI gate.
+
+### Non-goals for v0.1.0
+
+- Merging multiple files or override files the way `docker compose -f a -f b` does. Each file is
+  linted on its own.
+- Resolving `${VAR}` interpolation from the environment or `.env` files. Interpolated values are
+  treated as unknown.
+- Auto-fixing files.
+- Linting Dockerfiles or Kubernetes manifests.
+- Publishing to PyPI or the GitHub Marketplace.
+
+## 4. Interface
+
+```
+compose-doctor [-h] [--version] [--format {text,json,sarif}] [--fail-on {error,warning,note,never}]
+               [--config PATH] [--ignore IDS] [--show-suppressed] [--list-rules]
+               [FILE ...]
+```
+
+- `FILE ...`: files to lint; `-` reads standard input (reported as `<stdin>`).
+- With no files, the first existing of `compose.yaml`, `compose.yml`, `docker-compose.yaml`,
+  `docker-compose.yml` in the current directory is used (the Compose specification's lookup order).
+- `--fail-on` (default `error`): exit 1 if any unsuppressed finding has that severity or worse.
+- `--ignore CD010,CD015`: add rule IDs to the ignore list from the config file.
+- `--list-rules`: print every rule's ID, severity, title and rationale, then exit 0.
+- Configuration: `.compose-doctor.yml` in the current directory, or `--config PATH`. CLI flags
+  override the config file.
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | No unsuppressed finding at or above `--fail-on` |
+| 1 | At least one such finding |
+| 2 | Usage or input error, reported on stderr as `compose-doctor: error: <file>:<line>: <message>` |
+| 130 | Interrupted |
+| 141 | Output pipe closed early |
+
+## 5. Design
+
+### 5.1 Modules
+
+| Module | Responsibility |
+|---|---|
+| `loader.py` | Parse YAML into a node tree with `yaml.compose`, convert it to located values, build the `ComposeFile` model |
+| `model.py` | `Located[T]`, `Service`, `ComposeFile`, `Finding`, `Severity` |
+| `interpolation.py` | Detect `${VAR}` / `$VAR` (detection only) |
+| `rules/` | Rule registry and the rule implementations |
+| `suppress.py` | Inline `# compose-doctor: ignore ...` comments |
+| `config.py` | `.compose-doctor.yml` |
+| `report/` | Text, JSON and SARIF renderers |
+| `cli.py` | Argument parsing, file discovery, exit codes |
+
+### 5.2 The loader
+
+PyYAML's `yaml.load` family discards source positions and, with unsafe loaders, can construct
+arbitrary Python objects. Compose Doctor instead calls `yaml.compose(text, Loader=yaml.SafeLoader)`,
+which returns a node tree where every node carries a start mark, and converts the tree itself:
+
+- **Located values.** Every converted value is a `Located` holding the Python value and the
+  1-based line of the node (`start_mark.line + 1`). Mappings are `dict[str, Located]` plus the
+  line of each key, so rules can point at the offending key; sequences are `list[Located]`, so
+  rules can point at the offending list item.
+- **Scalars.** The node tag set by PyYAML's YAML 1.1 resolver decides the type: `bool`, `int`,
+  `float`, `null` or `str`. The raw source text is kept as well. Constructing the typed value uses
+  `SafeConstructor`'s scalar constructors only, so no arbitrary objects can be built.
+- **Aliases.** `yaml.compose` already resolves `*name` to the same node object as its anchor, so
+  an alias converts to a value located at the anchor's definition.
+- **Merge keys.** `<<: *defaults` and `<<: [*a, *b]` are applied during conversion with YAML 1.1
+  semantics: keys written explicitly in the mapping win over merged keys, and earlier entries in a
+  merge list win over later ones. A merged value keeps the line of its definition.
+- **Alias-bomb protection.** Conversion counts every node it produces. Above 100,000 it raises
+  `InputError("document expands to too many nodes")`. Because aliases share nodes, a "billion
+  laughs" document is small to compose but enormous to convert; the counter stops it early.
+- **Errors.** YAML syntax errors (using the problem mark), an empty document, a top-level value
+  that is not a mapping, a missing or non-mapping `services:` key, a service that is not a mapping,
+  and multiple documents in one file all raise `InputError` with the file and line.
+- **Extension fields.** Keys starting with `x-` are never linted, but can be merge sources.
+
+### 5.3 Rules
+
+Each rule has an ID, title, default severity, a rationale paragraph, a fix message, and a pure
+`check(service, file) -> list[Finding]` function. Rules read the parts of a service they need
+through small typed helpers; the model does not attempt to cover the whole Compose specification.
+
+### 5.4 Privacy
+
+Findings about environment variables name the key only. No output format, error message or log
+line contains an environment value from the input file. Loader error messages never quote scalar
+values from the document.
+
+## 6. Acceptance criteria
+
+- [ ] `pip install .` into a fresh virtual environment works, and `compose-doctor --version`
+      prints `compose-doctor 0.1.0`.
+- [ ] `python -m compose_doctor` behaves the same as `compose-doctor`.
+- [ ] The loader reports correct 1-based lines for keys and list items, including values reached
+      through aliases and merge keys.
+- [ ] Merge keys follow YAML 1.1 precedence (explicit keys win; earlier merge-list entries win).
+- [ ] An alias bomb is rejected with an `InputError` instead of exhausting memory.
+- [ ] Every loader error case reports the file and the correct line.
+- [ ] Interpolation detection covers every form in the brief and ignores `$$`.
+- [ ] Each of rules CD001–CD015 has passing good and bad fixture tests, including every
+      "must not trigger" case.
+- [ ] An unparseable port entry produces a `CD000` finding instead of a crash.
+- [ ] Inline suppressions (same line and line above), `ignore-file`, config ignores, per-service
+      ignores and severity overrides work; unknown rule IDs are rejected.
+- [ ] Suppressed findings are counted in every output format and listed with `--show-suppressed`.
+- [ ] Text, JSON and SARIF output match the documented shapes; SARIF results reference valid rules.
+- [ ] Every documented exit code (0, 1, 2, 130, 141) is tested.
+- [ ] No environment value from the input appears in any output format or error message.
+- [ ] `examples/hardened/compose.yaml` produces zero findings; `examples/insecure/compose.yaml`
+      triggers at least 12 rules.
+- [ ] README sample output is real and the rule table matches `--list-rules`.
+- [ ] `make check` passes: ruff, ruff format, mypy strict, pytest with ≥90% branch coverage.
+
+## 7. Test plan
+
+- **Unit:** loader (lines, aliases, merge keys, alias bomb, every error), interpolation, port and
+  image parsers, every rule's good and bad fixtures, suppressions and config.
+- **Integration:** the real CLI through `subprocess` with `sys.executable -m compose_doctor`:
+  golden JSON for the insecure example, zero findings for the hardened example, SARIF structure,
+  file discovery, stdin, every exit code, and the secret privacy test.
+
+## 8. Security and privacy
+
+- YAML is parsed with `yaml.compose` and `SafeLoader` only; no arbitrary objects are constructed.
+- Document expansion is bounded (alias-bomb protection).
+- Environment values are never printed.
+- The only runtime dependency is PyYAML.
+
+## 9. Limitations
+
+- No merging of override files and no interpolation; interpolated values are treated as unknown,
+  so a secret supplied through `${VAR}` with a literal default is not flagged.
+- Comments are found by scanning raw text, so a `# compose-doctor:` marker inside a quoted
+  multi-line string would be read as a suppression.
+
+## 10. Prior art
+
+- [hadolint](https://github.com/hadolint/hadolint) lints Dockerfiles.
+- [Checkov](https://github.com/bridgecrewio/checkov) and [KICS](https://github.com/Checkmarx/kics)
+  are broad infrastructure-as-code scanners that include Compose checks.
+- `docker compose config` validates and renders a Compose file but does not lint it.
+
+Compose Doctor focuses only on Compose, stays small and dependency-light, and gives accurate line
+numbers, per-line suppressions and SARIF output.
+
+## 11. Decisions
+
+Judgment calls where the implementation brief was ambiguous or was overridden:
+
+1. **GitHub remote.** The brief says never to add a remote or push. The project owner later asked
+   for the code to live in a fresh GitHub repository, so the owner's instruction wins and the
+   repository is pushed there.
+2. **Milestone-0 CLI.** The scaffold milestone's CLI supports `--version` only; the full interface
+   in §4 arrives with the CLI milestone.
