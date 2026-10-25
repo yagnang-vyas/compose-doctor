@@ -17,7 +17,7 @@ from compose_doctor.rules import RULES
 from compose_doctor.rules.base import Rule
 
 SARIF_SCHEMA = "https://json.schemastore.org/sarif-2.1.0.json"
-INFORMATION_URI = "https://github.com/yagnang-vyass/Compse-Doctor"
+INFORMATION_URI = "https://github.com/yagnang-vyas/compose-doctor"
 STDIN_URI = "stdin"
 
 _RULE_INDEX = {rule.id: index for index, rule in enumerate(RULES)}

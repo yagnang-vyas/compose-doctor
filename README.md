@@ -3,7 +3,12 @@
 Compose Doctor lints Docker Compose files for security holes, misconfigurations and reliability
 problems before they reach production.
 
-[![CI](https://github.com/yagnang-vyass/Compse-Doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/yagnang-vyass/Compse-Doctor/actions/workflows/ci.yml)
+[![CI](https://github.com/yagnang-vyas/compose-doctor/actions/workflows/ci.yml/badge.svg)](https://github.com/yagnang-vyas/compose-doctor/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-compose--doctor.netlify.app-0f766e)](https://compose-doctor.netlify.app/)
+
+**[Try it in your browser →](https://compose-doctor.netlify.app/playground)** The playground runs
+this exact Python package with Pyodide, so you can lint a Compose file without installing
+anything. Your YAML never leaves the browser.
 
 ## Why it exists
 
@@ -39,8 +44,8 @@ GitHub code scanning source.
 Compose Doctor is not published on PyPI. Install it from a clone (Python 3.10 or newer):
 
 ```console
-git clone https://github.com/yagnang-vyass/Compse-Doctor.git
-cd Compse-Doctor
+git clone https://github.com/yagnang-vyas/compose-doctor.git
+cd compose-doctor
 python -m venv .venv && . .venv/bin/activate
 pip install .
 compose-doctor --version
@@ -147,9 +152,9 @@ No problems found in 1 file.
 
 ## Web playground
 
-[`web/`](web/) holds a landing page and a browser playground that runs this exact Python package
-with Pyodide (WebAssembly), so you can try Compose Doctor without installing it. Your YAML stays
-in the browser. See [web/README.md](web/README.md) for the architecture and Netlify deployment.
+Live at **[compose-doctor.netlify.app](https://compose-doctor.netlify.app/)**.
+[`web/`](web/) holds its source: a landing page and a browser playground that runs this exact
+Python package with Pyodide (WebAssembly). Your YAML stays in the browser. See [web/README.md](web/README.md) for the architecture and Netlify deployment.
 
 ## Rules
 
@@ -249,7 +254,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install git+https://github.com/yagnang-vyass/Compse-Doctor.git
+      - run: pip install git+https://github.com/yagnang-vyas/compose-doctor.git
       - run: compose-doctor compose.yaml --format sarif --fail-on never > compose-doctor.sarif
       - uses: github/codeql-action/upload-sarif@v3
         with:
